@@ -10,6 +10,7 @@ public:
 	vector<FinderPattern*> find();
 	bool checkRatio(int currentState[]);
 	QRdetector();
+	Point intersectionPoint(vector<FinderPattern*> pattern);
 
 private:
 	bool checkPossibleCenter(int stateCount[], int i, int j);
@@ -18,7 +19,8 @@ private:
 	float crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal);
 	vector<FinderPattern*> identifyBestPatterns();
 	vector<FinderPattern*> orderBestPatterns(vector<FinderPattern*> pattern);
-	int getRowSkip();
+	vector<float> cross(FinderPattern* a, FinderPattern* b);
+	vector<float> cross(vector<float> a, vector<float> b);
 
 private:
 	int crossCheckStateCount[5];

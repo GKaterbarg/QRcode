@@ -6,9 +6,11 @@
 
 using namespace cv;
 using namespace std;
-Point intersection(vector<FinderPattern*> centers);
+
+void drawRect(vector<FinderPattern*> qrCode, Point intersPt, Mat img);
+
 int main() {
-	//VideoCapture capture = VideoCapture(1);
+	//VideoCapture capture = VideoCapture(1); // for video input
 	QRdetector qrDet = QRdetector();
 
 	//if(!capture.isOpened()) {
@@ -16,26 +18,26 @@ int main() {
 	//    return 1;
 	//}
 
-	Mat image = imread("Images/20.jpg");
+	Mat image = imread("Images/11.jpg");
 	Mat imgBW = Mat(image.rows, image.cols, CV_8UC1);
 	//while(true) {
 	//    capture >> image;
 
 	cvtColor(image, imgBW, CV_BGR2GRAY);
-	threshold(imgBW, imgBW, 128, 255, THRESH_BINARY);
+	threshold(imgBW, imgBW, 128, 255, THRESH_BINARY); 
 
 	qrDet.setImg(imgBW);
-	vector<FinderPattern*> qrCode = qrDet.find();
-	printf("Num centers: (%i)\n", qrCode.size());
-	//Point forthPtr = intersectionPoint(qrCode);
-	//rectangle(image, Point(qrCode[0]->getX(), qrCode[0]->getY()), Point(qrCode[1]->getX(), qrCode[1]->getY()), Scalar(0, 0, 255), 3);
+	vector<FinderPattern*> qrCode = qrDet.find(); // qrCode FP centers
+	if (qrCode.size() == 3){ 
+		Point intersectionPt = qrDet.intersectionPoint(qrCode);
+		drawRect(qrCode, intersectionPt, image);
+		circle(image, intersectionPt, 5, (0, 0, 255), -1);
+	}
 
 	for each (FinderPattern *fp in qrCode)
 	{
 		if (fp != NULL) circle(image, Point(fp->getX(), fp->getY()), 5, (0, 0, 255), -1);
 	}
-
-	//circle(image, forthPtr, 5,(0, 0, 255), -1);
 
 	imshow("Original", image);
 	imshow("Binary", imgBW);
@@ -46,31 +48,21 @@ int main() {
 	return 0;
 }
 
-vector<float> cross(vector<float> a, vector<float> b)
-{
-	return{	a[1] * b[2] - a[2] * b[1],
-			a[2] * b[0] - a[0] * b[2],
-			a[0] * b[1] - a[1] * b[0] };
-}
+void drawRect(vector<FinderPattern*> qrCode, Point intersPt, Mat img){
 
-Point intersectionPoint(vector<FinderPattern*> centers){
+	float maxY = 0.0;
+	float minY =  img.rows;
+	float y = 0.0;
+	int interval = 4 * ceil(qrCode[1]->getEstimatedModuleSize());
+	for (int i = 0; i < 3; i++){
+		if ((y = qrCode[i]->getY()) < minY) minY = y;
+		if ((y = qrCode[i]->getY()) > maxY) maxY = y;
+	}
+	if (maxY < intersPt.y) maxY = intersPt.y;
+	if (minY > intersPt.y) minY = intersPt.y;
 
-	vector<float> a = { centers[0]->getX(), centers[0]->getY(), 1 };
-	vector<float> b = { centers[1]->getX(), centers[1]->getY(), 1 };
-	vector<float> c = { centers[2]->getX(), centers[2]->getY(), 1 };
-
-	vector<float> ab = cross(a, b);
-	vector<float> bc = cross(b, c);
-
-	vector<float> abParal = { ab[0], ab[1], (-ab[0] * c[0] - ab[1] * c[1]) };
-	vector<float> bcParal = { bc[0], bc[1], -bc[0] * a[0] - bc[1] * a[1] };
-	vector<float> inters = cross(abParal, bcParal);
-
-	return Point(inters[0] / inters[2], inters[1] / inters[2]);
-}
-/*
-void drawRect(){
+	rectangle(img, Point(qrCode[0]->getX() - interval, maxY + interval), Point(qrCode[2]->getX() + interval, minY - interval), Scalar(0, 0, 255), 3);
 
 }
-*/
+
 

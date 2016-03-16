@@ -111,6 +111,7 @@ vector<FinderPattern*> QRdetector::find() {
 }
 
 
+
 vector<FinderPattern*> QRdetector::identifyBestPatterns() {
 	int initialSize = centers.size();
 	if (initialSize > 3) {
@@ -386,4 +387,32 @@ bool QRdetector::checkPossibleCenter(int stateCount[], int row, int col) {
 	}
 	printf("Returning false\n");
 	return false;
+}
+
+Point QRdetector::intersectionPoint(vector<FinderPattern*> centers){
+
+	vector<float> ab = cross(centers[0], centers[1]);
+	vector<float> bc = cross(centers[1], centers[2]);
+
+	vector<float> abParal = { ab[0], ab[1], (-ab[0] * centers[2]->getX() - ab[1] * centers[2]->getY()) };
+	vector<float> bcParal = { bc[0], bc[1], -bc[0] * centers[0]->getX() - bc[1] * centers[0]->getY() };
+	vector<float> inters = cross(abParal, bcParal);
+
+	return Point(inters[0] / inters[2], inters[1] / inters[2]);
+}
+
+
+
+vector<float> QRdetector::cross(FinderPattern* a, FinderPattern* b)
+{
+	return{ a->getY() - b->getY(),
+			b->getX() - a->getX(),
+			a->getX() * b->getY() - a->getY() * b->getX() };
+}
+
+vector<float> QRdetector::cross(vector<float> a, vector<float> b)
+{
+	return{ a[1] * b[2] - a[2] * b[1],
+			a[2] * b[0] - a[0] * b[2],
+			a[0] * b[1] - a[1] * b[0] };
 }
