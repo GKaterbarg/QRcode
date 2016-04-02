@@ -1,9 +1,14 @@
+#ifndef __QR_DETECTOR
+#define __QR_DETECTOR
+
 #include <opencv2/opencv.hpp>
 #include "FinderPattern.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 using namespace std;
 using namespace cv;
+
 class QRdetector {
 public:
 	void setImg(Mat img);
@@ -25,6 +30,7 @@ private:
 private:
 	int crossCheckStateCount[5];
 	bool hasSkipped;
-	std::vector<FinderPattern*> centers;
+	vector<FinderPattern*> centers;
 	Mat img;
 };
+#endif

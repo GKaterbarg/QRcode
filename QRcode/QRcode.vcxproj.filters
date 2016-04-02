@@ -24,12 +24,18 @@
     <ClCompile Include="QRdetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TestModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FinderPattern.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QRdetector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TestModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

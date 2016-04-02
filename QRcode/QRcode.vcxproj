@@ -121,10 +121,12 @@
     <ClCompile Include="FinderPattern.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QRdetector.cpp" />
+    <ClCompile Include="TestModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FinderPattern.h" />
     <ClInclude Include="QRdetector.h" />
+    <ClInclude Include="TestModule.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Images\1.jpg" />

@@ -6,7 +6,9 @@ QRdetector::QRdetector() {
 
 void QRdetector::setImg(Mat img) {
 	this->img = img;
+	this->centers = vector<FinderPattern*>();
 }
+
 
 vector<FinderPattern*> QRdetector::find() {
 
@@ -99,9 +101,9 @@ vector<FinderPattern*> QRdetector::find() {
 	}
 	// end looping rows
 
-	for (unsigned int l = 0; l<centers.size(); l++) {
-		printf("(%f, %f)\n", centers[l]->getX(), centers[l]->getY());
-	}
+	//for (unsigned int l = 0; l<centers.size(); l++) {
+	//	printf("(%f, %f)\n", centers[l]->getX(), centers[l]->getY());
+	//}
 
 	vector<FinderPattern*> patternInfo = identifyBestPatterns();
 	if (patternInfo.size() > 2) 
@@ -378,14 +380,14 @@ bool QRdetector::checkPossibleCenter(int stateCount[], int row, int col) {
 
 			if (!found) {
 				FinderPattern *newCenter = new FinderPattern(centerCol, centerRow, estimatedModuleSize);
-				printf("Created new center: (%f, %f)\n", newCenter->getX(), newCenter->getY());
+				//printf("Created new center: (%f, %f)\n", newCenter->getX(), newCenter->getY());
 				centers.push_back(newCenter);
 			}
 
 			return true;
 		}
 	}
-	printf("Returning false\n");
+	//printf("Returning false\n");
 	return false;
 }
 
