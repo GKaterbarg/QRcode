@@ -12,7 +12,7 @@ void QRdetector::setImg(Mat img) {
 
 vector<FinderPattern*> QRdetector::find() {
 
-	int skipRows = 3;
+	int skipRows = 1;
 	int stateCount[5] = { 0 };
 	int currentState = 0;
 
@@ -227,11 +227,11 @@ bool QRdetector::checkRatio(int stateCount[]) {
 	int moduleSize = ceil(totalFinderSize / 7.0);
 	float maxVariance = moduleSize * 0.5;
 
-	bool retVal = ((abs(moduleSize - stateCount[0])) <= maxVariance &&
-		(abs(moduleSize - stateCount[1])) <= maxVariance &&
+	bool retVal = ((abs(moduleSize - stateCount[0])) < maxVariance &&
+		(abs(moduleSize - stateCount[1])) < maxVariance &&
 		(abs(3 * moduleSize - stateCount[2])) < 3 * maxVariance &&
-		(abs(moduleSize - stateCount[3])) <= maxVariance &&
-		(abs(moduleSize - stateCount[4])) <= maxVariance);
+		(abs(moduleSize - stateCount[3])) < maxVariance &&
+		(abs(moduleSize - stateCount[4])) < maxVariance);
 	return retVal;
 }
 

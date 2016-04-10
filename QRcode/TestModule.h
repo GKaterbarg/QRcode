@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
+#include "QrDetectorMod.h"
 #include "QRdetector.h"
 #include<fstream>
 
@@ -15,6 +16,7 @@ private:
 	float getArea(vector<Point> coords);
 	float dist(Point v1, Point v2);
 	float getAreaRect(vector<FinderPattern*> qrCode, Point intersPt);
+	float getAreaRect(vector<vector<Point>> qrCode);
 
 private:
 	int numImages;

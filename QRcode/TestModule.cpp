@@ -1,19 +1,13 @@
 #include "TestModule.h"
 
 
-using namespace cv;
-using namespace std;
-
-
 TestModule::TestModule(int numImages){
 	this -> numImages = numImages;
 }
 
 
-void TestModule::startTest()
-{
+void TestModule::startTest() {
 	vector<vector<Point>> realCoords = readRealCoords();
-	QRdetector qrDet = QRdetector();
 	int n = numImages;
 	int size;
 	if ((size = realCoords.size()) < numImages) n = size;
@@ -26,10 +20,25 @@ void TestModule::startTest()
 		cvtColor(img, imgBW, CV_BGR2GRAY);
 		threshold(imgBW, imgBW, 128, 255, THRESH_OTSU);
 
-		qrDet.setImg(imgBW);
-		vector<FinderPattern*> qrCode = qrDet.find();
+		QrDetectorMod qrDet = QrDetectorMod(img);
+		vector<vector<Point>> fps = qrDet.find();
 
-		float s;
+		//for each(vector<Point> c in fps){
+		//	for each(Point2f p in c){
+		//		circle(img, p, 5, Scalar(0, 0, 255), -1);
+		//	}
+
+		//}
+		float s = getAreaRect(fps);
+
+		for each(Point pt in realCoords[i]) {
+			circle(img, pt, 5, Scalar(255, 0, 0), -1);
+		}
+
+		waitKey(1500);
+		imshow("Original", img);
+
+		/*float s;
 		Point intersectionPt;
 		if (qrCode.size() == 3) {
 			intersectionPt = qrDet.intersectionPoint(qrCode);
@@ -40,7 +49,7 @@ void TestModule::startTest()
 		if (s > 0.7*getArea(realCoords[i])) printf("Test image # %i: True\n", i);
 		else printf("Test image # %i: False\n", i);
 
-		drawPoints(realCoords[i], qrCode, intersectionPt);
+		drawPoints(realCoords[i], qrCode, intersectionPt);*/
 	}
 }
 
@@ -60,8 +69,7 @@ void TestModule::drawPoints(vector<Point> realCoords, vector<FinderPattern*> qrC
 }
 
 
-vector<vector<Point>> TestModule::readRealCoords()
-{
+vector<vector<Point>> TestModule::readRealCoords() {
 	vector<vector<Point>>base;
 	string line;
 	ifstream file("Test/Input.txt");
@@ -99,8 +107,7 @@ vector<vector<Point>> TestModule::readRealCoords()
 }
 
 
-float TestModule::dist(Point v1, Point v2)
-{
+float TestModule::dist(Point v1, Point v2) {
 	float dx = v1.x - v2.x;
 	float dy = v1.y - v2.y;
 
@@ -108,8 +115,7 @@ float TestModule::dist(Point v1, Point v2)
 }
 
 
-float TestModule::getArea(vector<Point> coords)
-{
+float TestModule::getArea(vector<Point> coords) {
 	float a = dist(coords[0], coords[1]);
 	float b = dist(coords[2], coords[3]);
 	float c = dist(coords[0], coords[2]);
@@ -120,8 +126,29 @@ float TestModule::getArea(vector<Point> coords)
 }
 
 
-float TestModule::getAreaRect(vector<FinderPattern*> qrCode, Point intersPt)
-{
+float TestModule::getAreaRect(vector<vector<Point>> qrCode) {
+	float maxY = 0.0;
+	float minY = img.rows;
+	float maxX = 0.0;
+	float minX = img.cols;
+	float x, y;
+	int interval = 0.4 * ceil(qrCode[0][1].x - qrCode[0][0].x);
+	for each(vector<Point> fp in qrCode){
+		for each(Point p in fp){
+			if (p.y < minY) minY = p.y;
+			if (p.y > maxY) maxY = p.y;
+			if (p.x < minX) minX = p.x;
+			if (p.x > maxX) maxX = p.x;
+		}
+	}
+
+	rectangle(img, Point(minX - interval, maxY + interval), Point(maxX + interval, minY - interval), Scalar(0, 0, 255), 3);
+
+	return (maxX - minX + 2 * interval) * (maxY - minY + 2 * interval);
+}
+
+
+float TestModule::getAreaRect(vector<FinderPattern*> qrCode, Point intersPt) {
 	float maxY = 0.0;
 	float minY = img.rows;
 	float maxX = 0.0;
