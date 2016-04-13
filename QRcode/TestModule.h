@@ -9,6 +9,7 @@ class TestModule {
 public:
 	TestModule(int numImages);
 	void startTest();
+	float getAreaRect(vector<vector<Point>> qrCode);
 
 private:
 	vector<vector<Point>> readRealCoords();
@@ -16,7 +17,6 @@ private:
 	float getArea(vector<Point> coords);
 	float dist(Point v1, Point v2);
 	float getAreaRect(vector<FinderPattern*> qrCode, Point intersPt);
-	float getAreaRect(vector<vector<Point>> qrCode);
 
 private:
 	int numImages;

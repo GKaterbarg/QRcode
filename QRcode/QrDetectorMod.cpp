@@ -16,13 +16,14 @@ vector<vector<Point>> QrDetectorMod::find() {
 	vector<vector<Point> > contours;
 	vector<Point> approx;
 	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
-	drawContours(edges, contours, -1, Scalar(255, 0, 0), CV_FILLED);
+	drawContours(edges, contours, -1, Scalar(255, 0, 0), CV_FILLED); //for debug
+	//imshow("Edges", edges); //for debug
 
 	for (int i = 0; i < contours.size(); i++)
 	{
 		approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.04, true);
-
-		if (approx.size() == 4 && fabs(contourArea(Mat(approx))) > 50 && isContourConvex(Mat(approx))){
+		if (approx.size() == 4 && fabs(contourArea(Mat(approx))) > 10 && isContourConvex(Mat(approx))){
+			drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
 			if (isQuad(&approx) && !inOtherContour(approx)){
 				quadList.push_back(vector<Point>(approx));
 			}
@@ -30,6 +31,7 @@ vector<vector<Point>> QrDetectorMod::find() {
 	}
 
 	vector<vector<Point>> fps;
+	Mat image2;
 	for each(vector<Point> quad in quadList){
 
 		Point min = minCoord(quad);
@@ -39,15 +41,15 @@ vector<vector<Point>> QrDetectorMod::find() {
 			y = min.y - 0.2*(max.y - min.y);
 		if (x < 0) x = 0; if (y < 0) y = 0;
 
-		int	w = 1.6*(max.x - min.x),
-			h = 1.6*(max.y - min.y);
+		int	w = 1.8*(max.x - min.x),
+			h = 1.8*(max.y - min.y);
 		if (x + w > gray.cols) w = gray.cols - x - 1;
 		if (h + y > gray.rows) h = gray.rows - y - 1;
-
-		Mat image2 = gray(Rect(x, y, w, h));
+		image2 = gray(Rect(x, y, w, h));
 		threshold(image2, image2, 128, 255, THRESH_OTSU);
-		bool b = horizontalCheck(image2);
-		if (b) fps.push_back(quad);
+		//imshow("Parts", image2);//for debug
+		if (horizontalCheck(image2)) fps.push_back(quad);
+		//waitKey(1200);//for debug
 	}
 
 	return fps;
@@ -91,16 +93,16 @@ float QrDetectorMod::dist(Point v1, Point v2) {
 bool QrDetectorMod::inOtherContour(vector<Point> test) {
 
 	RotatedRect testRect = minAreaRect(test);
+
 	for (int i = 0; i < quadList.size(); i++) {
+
 		RotatedRect rect = minAreaRect(quadList[i]);
-		float d = dist(rect.center, testRect.center);
+
 		if (dist(rect.center, testRect.center) < 10) {
 			if (testRect.size.area() > rect.size.area()) {
 				quadList[i] = test;
-
 				return true;
 			}
-
 			return true;
 		}
 	}
@@ -129,6 +131,11 @@ bool QrDetectorMod::isQuad(vector<Point>* quad) {
 	float d = dist(pts[2], pts[3]);
 	if (a < c) swap(a, c);
 	if (b < d) swap(b, d);
+
+	//float ca = c / a;//for debug
+	//float db = d / b;//for debug
+	//float ba = b / a;//for debug
+	//float da = d / a;//for debug
 
 	if (c / a < 0.9 || d / b < 0.9) return false;
 	if (b / a < 0.8 || a / b < 0.8) return false;

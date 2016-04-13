@@ -16,9 +16,9 @@ void TestModule::startTest() {
 		string path = "Test/" + to_string(i) + ".jpg";
 		img = imread(path);
 
-		Mat imgBW = Mat(img.rows, img.cols, CV_8UC1);
-		cvtColor(img, imgBW, CV_BGR2GRAY);
-		threshold(imgBW, imgBW, 128, 255, THRESH_OTSU);
+		//Mat imgBW = Mat(img.rows, img.cols, CV_8UC1);
+		//cvtColor(img, imgBW, CV_BGR2GRAY);
+		//threshold(imgBW, imgBW, 128, 255, THRESH_OTSU);
 
 		QrDetectorMod qrDet = QrDetectorMod(img);
 		vector<vector<Point>> fps = qrDet.find();
@@ -35,7 +35,7 @@ void TestModule::startTest() {
 			circle(img, pt, 5, Scalar(255, 0, 0), -1);
 		}
 
-		waitKey(1500);
+		waitKey(1200);
 		imshow("Original", img);
 
 		/*float s;
@@ -132,7 +132,7 @@ float TestModule::getAreaRect(vector<vector<Point>> qrCode) {
 	float maxX = 0.0;
 	float minX = img.cols;
 	float x, y;
-	int interval = 0.4 * ceil(qrCode[0][1].x - qrCode[0][0].x);
+	int interval = 0.1 * ceil(qrCode[0][1].x - qrCode[0][0].x);
 	for each(vector<Point> fp in qrCode){
 		for each(Point p in fp){
 			if (p.y < minY) minY = p.y;
