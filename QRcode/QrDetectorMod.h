@@ -14,7 +14,7 @@ public:
 	vector<FP> find();
 
 private:
-	vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern);
+	vector<FP> orderBestPatterns(vector<FP> pattern);
 	vector<int> cross(Point a, Point b);
 	vector<int> cross(vector<int> a, vector<int> b);
 	vector<int> cross(FP a, FP b);
@@ -31,7 +31,7 @@ private:
 	float centerFromEnd(int stateCount[], int end);
 	bool crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal, Mat img);
 	bool firstHorizontalCheck(Mat img, int row);
-	Point QrDetectorMod::intersectionPoint(vector<FP> fps);
+	Point intersectionPoint(vector<FP> fps);
 
 private:
 	vector<vector<Point>> quadList;
