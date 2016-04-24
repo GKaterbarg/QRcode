@@ -118,9 +118,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FinderPattern.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="QRdetector.cpp" />
     <ClCompile Include="QrDetectorMod.cpp" />
     <ClCompile Include="TestModule.cpp" />
   </ItemGroup>
@@ -151,8 +149,7 @@
     <Image Include="Images\SMS.jpeg" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FinderPattern.h" />
-    <ClInclude Include="QRdetector.h" />
+    <ClInclude Include="FP.hpp" />
     <ClInclude Include="QrDetectorMod.h" />
     <ClInclude Include="TestModule.h" />
   </ItemGroup>

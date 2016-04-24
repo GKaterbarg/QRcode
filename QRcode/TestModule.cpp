@@ -16,56 +16,27 @@ void TestModule::startTest() {
 		string path = "Test/" + to_string(i) + ".jpg";
 		img = imread(path);
 
-		//Mat imgBW = Mat(img.rows, img.cols, CV_8UC1);
-		//cvtColor(img, imgBW, CV_BGR2GRAY);
-		//threshold(imgBW, imgBW, 128, 255, THRESH_OTSU);
-
 		QrDetectorMod qrDet = QrDetectorMod(img);
-		vector<vector<Point>> fps = qrDet.find();
+		vector<FP> fps = qrDet.find();
+		if (fps.size() > 2) printf("Image %i True\n", i);
+		else printf("Image %i False\n", i);
 
-		//for each(vector<Point> c in fps){
-		//	for each(Point2f p in c){
-		//		circle(img, p, 5, Scalar(0, 0, 255), -1);
-		//	}
+		for each(FP fp in fps){
+			
+				circle(img, Point(fp.x, fp.y), 5, Scalar(0, 0, 255), -1);
 
-		//}
+		}
+
 		float s = getAreaRect(fps);
 
 		for each(Point pt in realCoords[i]) {
 			circle(img, pt, 5, Scalar(255, 0, 0), -1);
 		}
 
-		waitKey(1200);
+		waitKey(1000);
 		imshow("Original", img);
 
-		/*float s;
-		Point intersectionPt;
-		if (qrCode.size() == 3) {
-			intersectionPt = qrDet.intersectionPoint(qrCode);
-			s = getAreaRect(qrCode, intersectionPt);
-		}
-		else s = -1.0;
-
-		if (s > 0.7*getArea(realCoords[i])) printf("Test image # %i: True\n", i);
-		else printf("Test image # %i: False\n", i);
-
-		drawPoints(realCoords[i], qrCode, intersectionPt);*/
 	}
-}
-
-
-void TestModule::drawPoints(vector<Point> realCoords, vector<FinderPattern*> qrCode, Point intersPt) {
-
-	for each (FinderPattern* fp in qrCode) {
-		if (fp != NULL) circle(img, Point(fp->getX(), fp->getY()), 5, Scalar(0, 0, 255), -1);
-	}
-
-	for each(Point pt in realCoords) {
-		circle(img, pt, 5, Scalar(255, 0, 0), -1);
-	}
-
-	imshow("Original", img);
-	waitKey(1500);
 }
 
 
@@ -126,45 +97,19 @@ float TestModule::getArea(vector<Point> coords) {
 }
 
 
-float TestModule::getAreaRect(vector<vector<Point>> qrCode) {
+float TestModule::getAreaRect(vector<FP> qrCode) {
 	float maxY = 0.0;
 	float minY = img.rows;
 	float maxX = 0.0;
 	float minX = img.cols;
-	float x, y;
-	int interval = 0.1 * ceil(qrCode[0][1].x - qrCode[0][0].x);
-	for each(vector<Point> fp in qrCode){
-		for each(Point p in fp){
-			if (p.y < minY) minY = p.y;
-			if (p.y > maxY) maxY = p.y;
-			if (p.x < minX) minX = p.x;
-			if (p.x > maxX) maxX = p.x;
-		}
+	int x, y;
+	int interval = 4 * qrCode[0].module;
+	for (int i = 0; i < 4; i++) {
+		if ((y = qrCode[i].y) < minY) minY = y;
+		if ((y = qrCode[i].y) > maxY) maxY = y;
+		if ((x = qrCode[i].x) < minX) minX = x;
+		if ((x = qrCode[i].x) > maxX) maxX = x;
 	}
-
-	rectangle(img, Point(minX - interval, maxY + interval), Point(maxX + interval, minY - interval), Scalar(0, 0, 255), 3);
-
-	return (maxX - minX + 2 * interval) * (maxY - minY + 2 * interval);
-}
-
-
-float TestModule::getAreaRect(vector<FinderPattern*> qrCode, Point intersPt) {
-	float maxY = 0.0;
-	float minY = img.rows;
-	float maxX = 0.0;
-	float minX = img.cols;
-	float x, y;
-	int interval = 4 * ceil(qrCode[1]->getEstimatedModuleSize());
-	for (int i = 0; i < 3; i++) {
-		if ((y = qrCode[i]->getY()) < minY) minY = y;
-		if ((y = qrCode[i]->getY()) > maxY) maxY = y;
-		if ((x = qrCode[i]->getX()) < minX) minX = x;
-		if ((x = qrCode[i]->getX()) > maxX) maxX = x;
-	}
-	if (maxY < intersPt.y) maxY = intersPt.y;
-	if (minY > intersPt.y) minY = intersPt.y;
-	if (maxX < intersPt.x) maxX = intersPt.x;
-	if (minX > intersPt.x) minX = intersPt.x;
 
 	rectangle(img, Point(minX - interval, maxY + interval), Point(maxX + interval, minY - interval), Scalar(0, 0, 255), 3);
 

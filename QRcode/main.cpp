@@ -6,24 +6,27 @@
 using namespace cv;
 using namespace std;
 
+Mat img;
+
+//float getAreaRect(vector<vector<Point>> qrCode);
 
 int main()
 {
-	const int n = 20;
-	TestModule test = TestModule(n);
+	TestModule test = TestModule(20);
 	test.startTest();
-	/*Mat img = imread("Test/7.jpg");
+
+	/*img = imread("Test/15.jpg");
 	QrDetectorMod qrDet = QrDetectorMod(img);
-	vector<vector<Point>> fps = qrDet.find();
-	for each (vector<Point> fp in fps){
-		for each(Point pt in fp){
-			circle(img, pt, 5, Scalar(0, 0, 255), -1);
-		}
+	vector<Point> fps = qrDet.find();
+	for each (Point c in fps){
+
+			circle(img, c, 5, Scalar(0, 0, 255), -1);
 			
-	}*/
-	//imshow("Original", img);
+	}
+	imshow("Original", img);*/
 	waitKey(0);
 	return 0;
 }
+
 
 

@@ -21,12 +21,6 @@
     <ClCompile Include="TestModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QRdetector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FinderPattern.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QrDetectorMod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -109,13 +103,10 @@
     <ClInclude Include="TestModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="QRdetector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FinderPattern.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="QrDetectorMod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FP.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
