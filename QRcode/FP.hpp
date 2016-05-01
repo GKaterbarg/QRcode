@@ -9,7 +9,9 @@ public:
 		this->y = y;
 		this->module = module;
 	}
-	FP::FP() {}
+	FP::FP() {
+	
+	}
 
 public:
 	int x;

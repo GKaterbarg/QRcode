@@ -10,7 +10,8 @@ using namespace std;
 
 class QrDetectorMod {
 public:
-	QrDetectorMod (Mat image);
+	QrDetectorMod ();
+	void setImage(Mat image);
 	vector<FP> find();
 
 private:
@@ -32,6 +33,7 @@ private:
 	bool crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal, Mat img);
 	bool firstHorizontalCheck(Mat img, int row);
 	Point intersectionPoint(vector<FP> fps);
+	float QrDetectorMod::getAreaRect(vector<FP> qrCode);
 
 private:
 	vector<vector<Point>> quadList;

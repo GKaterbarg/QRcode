@@ -1,12 +1,18 @@
 #include "QrDetectorMod.h"
 
-QrDetectorMod::QrDetectorMod(Mat image){
-	this -> image = image;
+QrDetectorMod::QrDetectorMod() {
+
+}
+
+void QrDetectorMod::setImage(Mat image) {
+
+	this->image = image;
+	quadList = vector<vector<Point>>();
+	module = 0.0;
 }
 
 
 vector<FP> QrDetectorMod::find() {
-
 	Mat gray = Mat(image.rows, image.cols, CV_8UC1);
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));
 	cvtColor(image, gray, CV_BGR2GRAY);
@@ -14,53 +20,64 @@ vector<FP> QrDetectorMod::find() {
 
 	vector<vector<Point>> contours;
 	vector<Point> approx;
-	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
+	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_SIMPLE); //TODO: Has trik this func ?
 
 	for (int i = 0; i < contours.size(); i++)
 	{
 		approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.04, true); // TODO: rewrite approxPolyDP (Ramer–Douglas–Peucker algorithm)
 		if (approx.size() == 4 && isQuad(&approx) && abs(area(approx)) > 10){
-			drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
+			//drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
 			if (!inOtherContour(&approx)){
 				quadList.push_back(vector<Point>(approx));
 			}
 		}
 	}
 
-	vector<FP> fps;
-	for each(vector<Point> quad in quadList){
+	if (quadList.size() < 2){
+		return vector<FP>();
+	}
 
-		Point min = minCoord(quad);
-		Point max = maxCoord(quad);
+		vector<FP> fps;
+		for each(vector<Point> quad in quadList){
 
-		int x = min.x - 0.4*(max.x - min.x),
-			y = min.y - 0.4*(max.y - min.y);
-		if (x < 0) x = 0; if (y < 0) y = 0;
+			Point min = minCoord(quad);
+			Point max = maxCoord(quad);
+			int x = min.x - 0.7*(max.x - min.x),
+				y = min.y - 0.7*(max.y - min.y);
+			if (x < 0) x = 0; if (y < 0) y = 0;
+			
+			int	w = 2.8 * (max.x - min.x),
+				h = 2.8 * (max.y - min.y);
+			if (h > 0.5*image.rows || w > 0.5*image.cols) continue;
+			if (x + w > gray.cols) w = gray.cols - x - 1;
+			if (h + y > gray.rows) h = gray.rows - y - 1;
 
-		int	w = 2*(max.x - min.x),
-			h = 2*(max.y - min.y);
-		if (x + w > gray.cols) w = gray.cols - x - 1;
-		if (h + y > gray.rows) h = gray.rows - y - 1;
-		Mat partImg = gray(Rect(x, y, w, h));
-		threshold(partImg, partImg, 128, 255, THRESH_OTSU);
-		//imshow("Parts", partImg);//for debug
-		if (firstHorizontalCheck(partImg, quad[4].y - y)) {
-			fps.push_back(FP(quad[4].x, quad[4].y, module));
-		}
-		else {
+			Mat partImg = Mat::zeros(w, h, CV_64F);
+
+			partImg = gray(Rect(x, y, w, h));
+			threshold(partImg, partImg, 128, 255, THRESH_OTSU); // TODO: Has trik this func?
+			int dif = quad[4].y - y;
+			if (dif >= partImg.rows || dif <= 0) continue;
+			if (firstHorizontalCheck(partImg, dif)) {
+				fps.push_back(FP(quad[4].x, quad[4].y, module));
+			}
+			else {
 				if (horizontalCheck(partImg)) {
 					fps.push_back(FP(quad[4].x, quad[4].y, module));
 				}
+			}
+			//imshow("Parts", partImg);//for debug
+			//waitKey(1200);//for debug
 		}
-		//waitKey(1200);//for debug
-	}
 
-	Point intersPt;
-	fps = orderBestPatterns(fps);
-	if (fps.size() == 3) intersPt = intersectionPoint(fps);
-	fps.push_back(FP(intersPt.x, intersPt.y, -1));
+		Point intersPt;
+		if (fps.size() == 3){
+			fps = orderBestPatterns(fps);
+			intersPt = intersectionPoint(fps);
+			fps.push_back(FP(intersPt.x, intersPt.y, -1));
+		}
 
-	return fps;
+		return fps;
 }
 
 Point QrDetectorMod::intersectionPoint(vector<FP> fps) {
@@ -174,21 +191,23 @@ int QrDetectorMod::area(vector<Point> quad) {
 bool QrDetectorMod::inOtherContour(vector<Point>* test) {
 
 	Point testCenter = getCenter(*test);
+	if (testCenter.x == NULL){
+		return true;
+	}
+		for (int i = 0; i < quadList.size(); i++) {
 
-	for (int i = 0; i < quadList.size(); i++) {
-
-		if (dist(testCenter, quadList[i][4]) < 10) {
-			if (area(*test) > area(quadList[i])) {
-				(*test).push_back(testCenter);
-				quadList[i] = *test;
+			if (dist(testCenter, quadList[i][4]) < 10) {
+				if (area(*test) < area(quadList[i])) {
+					(*test).push_back(testCenter);
+					quadList[i] = *test;
+					return true;
+				}
 				return true;
 			}
-			return true;
 		}
-	}
 
-	(*test).push_back(testCenter);
-	return false;
+		(*test).push_back(testCenter);
+		return false; 
 }
 
 vector<int> QrDetectorMod::cross(Point a, Point b) {
@@ -214,21 +233,13 @@ vector<int> QrDetectorMod::cross(FP a, FP b)
 Point QrDetectorMod::getCenter(vector<Point> quad) {
 
 	vector<int> inters = cross(cross(quad[0], quad[3]), cross(quad[1], quad[2]));
-
-	return Point(inters[0] / inters[2], inters[1] / inters[2]);
+	if (inters[2] != 0){
+		return Point(inters[0] / inters[2], inters[1] / inters[2]);
+	}
+	else{
+		return Point(NULL,NULL);
+	}
 }
-/*
-Point QRdetector::intersectionPoint(vector<FinderPattern*> centers){
-
-	vector<float> ab = cross(centers[0], centers[1]);
-	vector<float> bc = cross(centers[1], centers[2]);
-
-	vector<float> abParal = { ab[0], ab[1], (-ab[0] * centers[2]->getX() - ab[1] * centers[2]->getY()) };
-	vector<float> bcParal = { bc[0], bc[1], -bc[0] * centers[0]->getX() - bc[1] * centers[0]->getY() };
-	vector<float> inters = cross(abParal, bcParal);
-
-	return Point(inters[0] / inters[2], inters[1] / inters[2]);
-}*/
 
 
 bool QrDetectorMod::isQuad(vector<Point>* quad) {
@@ -258,8 +269,8 @@ bool QrDetectorMod::isQuad(vector<Point>* quad) {
 	//float da = d / a;//for debug
 
 	if (c / a < 0.9 || d / b < 0.9) return false;
-	if (b / a < 0.8 || a / b < 0.8) return false;
-	if (d / a < 0.8 || a / d < 0.8) return false;
+	if (b / a < 0.5 || a / b < 0.6) return false;
+	if (d / a < 0.5 || a / d < 0.6) return false;
 
 	return true;
 }
@@ -274,7 +285,7 @@ bool QrDetectorMod::checkRatio(int stateCount[]) {
 			return false;
 	}
 
-	if (totalFinderSize<7) {
+	if (totalFinderSize < 7) {
 		return false;
 	}
 
@@ -283,7 +294,7 @@ bool QrDetectorMod::checkRatio(int stateCount[]) {
 
 	bool retVal = ((abs(moduleSize - stateCount[0])) <= maxVariance &&
 		(abs(moduleSize - stateCount[1])) <= maxVariance &&
-		(abs(3 * moduleSize - stateCount[2])) <= 3 * maxVariance &&
+		(abs(3 * moduleSize - stateCount[2])) < 3 * maxVariance &&
 		(abs(moduleSize - stateCount[3])) <= maxVariance &&
 		(abs(moduleSize - stateCount[4])) <= maxVariance);
 
@@ -528,6 +539,8 @@ bool QrDetectorMod::firstHorizontalCheck(Mat img, int row) {
 
 	return false;
 }
+
+
 
 
 

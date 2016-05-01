@@ -11,14 +11,17 @@ void TestModule::startTest() {
 	int n = numImages;
 	int size;
 	if ((size = realCoords.size()) < numImages) n = size;
-
+	QrDetectorMod qrDet = QrDetectorMod();
 	for (int i = 0; i < n; i++) {
 		string path = "Test/" + to_string(i) + ".jpg";
 		img = imread(path);
 
-		QrDetectorMod qrDet = QrDetectorMod(img);
+		qrDet.setImage(img);
 		vector<FP> fps = qrDet.find();
-		if (fps.size() > 2) printf("Image %i True\n", i);
+		if (fps.size() > 2) {
+			printf("Image %i True\n", i);
+			float s = getAreaRect(fps);
+		}
 		else printf("Image %i False\n", i);
 
 		for each(FP fp in fps){
@@ -26,8 +29,6 @@ void TestModule::startTest() {
 				circle(img, Point(fp.x, fp.y), 5, Scalar(0, 0, 255), -1);
 
 		}
-
-		float s = getAreaRect(fps);
 
 		for each(Point pt in realCoords[i]) {
 			circle(img, pt, 5, Scalar(255, 0, 0), -1);
