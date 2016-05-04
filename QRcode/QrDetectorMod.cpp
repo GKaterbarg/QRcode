@@ -11,7 +11,6 @@ void QrDetectorMod::setImage(Mat image) {
 	module = 0.0;
 }
 
-
 vector<FP> QrDetectorMod::find() {
 	Mat gray = Mat(image.rows, image.cols, CV_8UC1);
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));
@@ -24,11 +23,24 @@ vector<FP> QrDetectorMod::find() {
 
 	for (int i = 0; i < contours.size(); i++)
 	{
-		approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.04, true); // TODO: rewrite approxPolyDP (Ramer–Douglas–Peucker algorithm)
-		if (approx.size() == 4 && isQuad(&approx) && abs(area(approx)) > 10){
+		//approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.03, true); // TODO: rewrite approxPolyDP (Ramer–Douglas–Peucker algorithm)
+		//for each (Point p in approx){
+
+		//	circle(image, Point(p.x, p.y), 1, Scalar(0, 255, 255), -1);
+
+		//}
+		approx = approximate(contours[i]);
+		for each (Point p in approx){
+
+			circle(image, Point(p.x, p.y), 1, Scalar(0, 0, 255), -1);
+
+		}
+		if (approx.size() == 4){
 			//drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
-			if (!inOtherContour(&approx)){
-				quadList.push_back(vector<Point>(approx));
+			if (isQuad(&approx) && abs(area(approx)) > 10){
+				if (!inOtherContour(&approx)){
+					quadList.push_back(vector<Point>(approx));
+				}
 			}
 		}
 	}
@@ -92,7 +104,6 @@ Point QrDetectorMod::intersectionPoint(vector<FP> fps) {
 	return Point(inters[0] / inters[2], inters[1] / inters[2]);
 }
 
-
 // 0 and 2 elements of returned vec locate on hypotenuse, 0 - left FP, 2 - right FP 
 vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern) {
 	double distance01 = dist(pattern[0], pattern[1]);
@@ -141,7 +152,6 @@ vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern) {
 	return returnPatterns;
 }
 
-
 Point QrDetectorMod::minCoord(vector<Point> v) {
 	int minY = v[0].y;
 	int minX = v[0].x;
@@ -154,7 +164,6 @@ Point QrDetectorMod::minCoord(vector<Point> v) {
 	return Point(minX, minY);
 }
 
-
 Point QrDetectorMod::maxCoord(vector<Point> v) {
 	int maxY = v[0].y;
 	int maxX = v[0].x;
@@ -166,7 +175,6 @@ Point QrDetectorMod::maxCoord(vector<Point> v) {
 
 	return Point(maxX, maxY);
 }
-
 
 double QrDetectorMod::dist(Point v1, Point v2) {
 	int dx = v1.x - v2.x;
@@ -186,7 +194,6 @@ int QrDetectorMod::area(vector<Point> quad) {
 
 	return (quad[0].x - quad[1].x) * (quad[1].y - quad[3].y);
 }
-
 
 bool QrDetectorMod::inOtherContour(vector<Point>* test) {
 
@@ -229,7 +236,6 @@ vector<int> QrDetectorMod::cross(FP a, FP b)
 			a.x * b.y - a.y * b.x };
 }
 
-
 Point QrDetectorMod::getCenter(vector<Point> quad) {
 
 	vector<int> inters = cross(cross(quad[0], quad[3]), cross(quad[1], quad[2]));
@@ -240,7 +246,6 @@ Point QrDetectorMod::getCenter(vector<Point> quad) {
 		return Point(NULL,NULL);
 	}
 }
-
 
 bool QrDetectorMod::isQuad(vector<Point>* quad) {
 
@@ -263,18 +268,12 @@ bool QrDetectorMod::isQuad(vector<Point>* quad) {
 	if (a < c) swap(a, c);
 	if (b < d) swap(b, d);
 
-	//float ca = c / a;//for debug
-	//float db = d / b;//for debug
-	//float ba = b / a;//for debug
-	//float da = d / a;//for debug
-
 	if (c / a < 0.9 || d / b < 0.9) return false;
 	if (b / a < 0.5 || a / b < 0.6) return false;
 	if (d / a < 0.5 || a / d < 0.6) return false;
 
 	return true;
 }
-
 
 bool QrDetectorMod::checkRatio(int stateCount[]) {
 	int totalFinderSize = 0;
@@ -301,11 +300,9 @@ bool QrDetectorMod::checkRatio(int stateCount[]) {
 	return retVal;
 }
 
-
 float QrDetectorMod::centerFromEnd(int stateCount[], int end) {
 	return (float)(end - stateCount[4] - stateCount[3]) - stateCount[2] / 2.0f;
 }
-
 
 bool QrDetectorMod::horizontalCheck(Mat img) {
 
@@ -402,7 +399,6 @@ bool QrDetectorMod::horizontalCheck(Mat img) {
 
 	return false;
 }
-
 
 bool QrDetectorMod::crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal, Mat img) {
 	int stateCount[5] = { 0 };
@@ -538,6 +534,97 @@ bool QrDetectorMod::firstHorizontalCheck(Mat img, int row) {
 
 
 	return false;
+}
+
+double QrDetectorMod::contourLength(vector<Point> contour){
+	if (contour.size() <= 1)
+		return 0.0;
+	double perimeter = 0.0;
+
+	for (int i = 0; i < contour.size() - 1; i++)
+	{
+		
+		perimeter += dist(contour[i], contour[i+1]);
+	}
+
+	return perimeter + dist(contour[0], contour[contour.size() - 1]);
+}
+
+vector<Point> QrDetectorMod::approximate(vector<Point> contour){
+	int lastPt = findLastPoint(contour);
+	vector<Point> clockwise;
+	double eps = contourLength(contour)*0.04;
+	vector<Point> counterclockwise;
+	for (int i = 0; i < lastPt + 1; i++){
+		clockwise.push_back(contour[i]);
+	}
+	for (int i = lastPt; i < contour.size(); i++){
+		counterclockwise.push_back(contour[i]);
+	}
+	vector<Point> approx = simplifyWithRDP(clockwise, 0, clockwise.size() - 1, eps);
+	approx.pop_back();
+	vector<Point> approx2 = simplifyWithRDP(counterclockwise, 0, counterclockwise.size() - 1, eps);
+	approx.insert(approx.end(), approx2.begin(), approx2.end());
+	return approx;
+}
+
+double QrDetectorMod::pointLineDistance(Point point, Point start, Point end) {
+	if (start.x == end.x && start.y == end.y) {
+		return dist(point, start);
+	}
+	double n = abs((end.x - start.x) * (start.y - point.y) - (start.x - point.x) * (end.y - start.y));
+	double d = sqrt((end.x - start.x) * (end.x - start.x) + (end.y - start.y) * (end.y - start.y));
+
+	return n / d;
+}
+
+int QrDetectorMod::findLastPoint(vector<Point> pts) {
+	double mdist = -1.0;
+	int last;
+	for (int i = 0; i < pts.size(); i++){
+			double d = dist(pts[0], pts[i]);
+			if (d > mdist){
+				mdist = d;
+				last = i;
+			}
+	}
+	return last;
+
+}
+
+vector<Point> QrDetectorMod::simplifyWithRDP(vector<Point>& points, int startIndex, int lastIndex, double epsilon) {
+	if (points.size() < 3 ){  //base case 1
+		return points;
+	}
+
+	int index = startIndex;
+	double dMax = -1.0; 
+
+	//distance calculation
+	for (int i = index + 1; i < lastIndex; i++){ 
+		double d = pointLineDistance(points[i], points[startIndex], points[lastIndex]);
+		if (d > dMax){
+			dMax = d;
+			index = i;
+		}
+	}
+
+	if (dMax > epsilon){
+
+		vector<Point> r1 = simplifyWithRDP(points, startIndex, index, epsilon);
+		vector<Point> r2 = simplifyWithRDP(points, index, lastIndex, epsilon);
+
+		//Concat simplified path1 and path2 together
+		vector<Point> rs(r1);
+		rs.pop_back();
+		rs.insert(rs.end(), r2.begin(), r2.end());
+		return rs;
+	}
+	else { //base case 2, all points between are to be removed.
+		vector<Point> r(1, points[startIndex]);
+		r.push_back(points[lastIndex]);
+		return r;
+	}
 }
 
 

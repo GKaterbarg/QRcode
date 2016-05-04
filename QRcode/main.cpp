@@ -10,9 +10,9 @@ void getAreaRect(vector<FP> qrCode, Mat image);
 
 int main()
 {
-	//Single image test
-	/*QrDetectorMod qrDet = QrDetectorMod();
-	Mat img = imread("Test/15.jpg");
+	//Single image test------------------------------------------
+	QrDetectorMod qrDet = QrDetectorMod();
+	Mat img = imread("Test/18.jpg");
 	qrDet.setImage(img);
 	vector<FP> fps = qrDet.find();
 	for each (FP c in fps){
@@ -20,13 +20,13 @@ int main()
 		circle(img, Point(c.x, c.y), 5, Scalar(0, 0, 255), -1);
 
 	}
-	if (fps.size() > 3) getAreaRect(fps, img);
-	imshow("Original", img);*/
+	//if (fps.size() > 3) getAreaRect(fps, img);
+	imshow("Original", img);
 
-	//Test num images
-	TestModule test = TestModule(20);
-	test.startTest();
-	//Video input
+	//Test num images------------------------------------------------
+	//TestModule test = TestModule(20);
+	//test.startTest();
+	//Video input----------------------------------------------------
 	/*Mat img;
 	QrDetectorMod qrDet = QrDetectorMod();
 	VideoCapture capture = VideoCapture("Images/vlc-record-1.avi");
