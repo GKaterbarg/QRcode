@@ -15,7 +15,8 @@ public:
 	vector<FP> find();
 
 private:
-	vector<FP> orderBestPatterns(vector<FP> pattern);
+	// Contour filtration
+	vector<vector<Point>>saveContours(vector<Point> edges, vector<Point> contours);
 	vector<int> cross(Point a, Point b);
 	vector<int> cross(FP a, FP b);
 	vector<int> cross(vector<int> a, vector<int> b);
@@ -27,18 +28,23 @@ private:
 	Point getCenter(vector<Point> quad);
 	bool isQuad(vector<Point>* pts);
 	bool inOtherContour(vector<Point>* test);
+	// Binary image analysys
 	bool firstHorizontalCheck(Mat img, int row);
 	bool horizontalCheck(Mat img);
 	bool checkRatio(int stateCount[]);
 	float centerFromEnd(int stateCount[], int end);
 	bool crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal, Mat img);
-	Point intersectionPoint(vector<FP> fps);
 	float getAreaRect(vector<FP> qrCode);
+	// Approximation
 	vector<Point> simplifyWithRDP(vector<Point>& points, int startIndex, int lastIndex, double epsilon);
 	double pointLineDistance(Point point, Point start, Point end);
-	int findLastPoint(vector<Point> pts);
+	pair<int,int> findFurthestPts(vector<Point> pts);
 	double contourLength(vector<Point> contour);
+	int removeExtraPoints(vector<Point>* dst, double eps);
 	vector<Point> approximate(vector<Point> contour);
+	// Final work with FPs
+	Point intersectionPoint(vector<FP> fps);
+	vector<FP> orderBestPatterns(vector<FP> pattern);
 
 private:
 	vector<vector<Point>> quadList;

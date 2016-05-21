@@ -34,7 +34,7 @@ void TestModule::startTest() {
 			circle(img, pt, 5, Scalar(255, 0, 0), -1);
 		}
 
-		waitKey(1000);
+		waitKey(100);
 		imshow("Original", img);
 
 	}

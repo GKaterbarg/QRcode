@@ -11,6 +11,8 @@ void QrDetectorMod::setImage(Mat image) {
 	module = 0.0;
 }
 
+
+// Main execute funcion---------------------------------------------------------------------------------
 vector<FP> QrDetectorMod::find() {
 	Mat gray = Mat(image.rows, image.cols, CV_8UC1);
 	Mat edges(image.size(), CV_MAKETYPE(image.depth(), 1));
@@ -19,22 +21,13 @@ vector<FP> QrDetectorMod::find() {
 
 	vector<vector<Point>> contours;
 	vector<Point> approx;
-	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_SIMPLE); //TODO: Has trik this func ?
+	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_NONE); //TODO: Has trik this func ?
 
 	for (int i = 0; i < contours.size(); i++)
 	{
-		//approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.03, true); // TODO: rewrite approxPolyDP (Ramer–Douglas–Peucker algorithm)
-		//for each (Point p in approx){
 
-		//	circle(image, Point(p.x, p.y), 1, Scalar(0, 255, 255), -1);
-
-		//}
 		approx = approximate(contours[i]);
-		for each (Point p in approx){
-
-			circle(image, Point(p.x, p.y), 1, Scalar(0, 0, 255), -1);
-
-		}
+		//for each (Point p in approx) circle(image, Point(p.x, p.y), 1, Scalar(0, 0, 255), -1); // for degug
 		if (approx.size() == 4){
 			//drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
 			if (isQuad(&approx) && abs(area(approx)) > 10){
@@ -49,34 +42,31 @@ vector<FP> QrDetectorMod::find() {
 		return vector<FP>();
 	}
 
-		vector<FP> fps;
-		for each(vector<Point> quad in quadList){
+	vector<FP> fps;
+	for each(vector<Point> quad in quadList){
 
-			Point min = minCoord(quad);
-			Point max = maxCoord(quad);
-			int x = min.x - 0.7*(max.x - min.x),
-				y = min.y - 0.7*(max.y - min.y);
-			if (x < 0) x = 0; if (y < 0) y = 0;
+		Point min = minCoord(quad);
+		Point max = maxCoord(quad);
+		int x = min.x - 0.7*(max.x - min.x),
+			y = min.y - 0.7*(max.y - min.y);
+		if (x < 0) x = 0; if (y < 0) y = 0;
 			
-			int	w = 2.8 * (max.x - min.x),
-				h = 2.8 * (max.y - min.y);
-			if (h > 0.5*image.rows || w > 0.5*image.cols) continue;
-			if (x + w > gray.cols) w = gray.cols - x - 1;
-			if (h + y > gray.rows) h = gray.rows - y - 1;
+		int	w = 2.8 * (max.x - min.x),
+			h = 2.8 * (max.y - min.y);
+		if (h > 0.5*image.rows || w > 0.5*image.cols) continue;
+		if (x + w > gray.cols) w = gray.cols - x - 1;
+		if (h + y > gray.rows) h = gray.rows - y - 1;
 
-			Mat partImg = Mat::zeros(w, h, CV_64F);
-
-			partImg = gray(Rect(x, y, w, h));
-			threshold(partImg, partImg, 128, 255, THRESH_OTSU); // TODO: Has trik this func?
-			int dif = quad[4].y - y;
-			if (dif >= partImg.rows || dif <= 0) continue;
-			if (firstHorizontalCheck(partImg, dif)) {
-				fps.push_back(FP(quad[4].x, quad[4].y, module));
+		Mat partImg = gray(Rect(x, y, w, h));
+		threshold(partImg, partImg, 128, 255, THRESH_OTSU); // TODO: Has trik this func?
+		int dif = quad[4].y - y;
+		if (dif >= partImg.rows || dif <= 0) continue;
+		if (firstHorizontalCheck(partImg, dif)) {
+			fps.push_back(FP(quad[4].x, quad[4].y, module));
 			}
-			else {
-				if (horizontalCheck(partImg)) {
-					fps.push_back(FP(quad[4].x, quad[4].y, module));
-				}
+		else {
+			if (horizontalCheck(partImg)) {
+				fps.push_back(FP(quad[4].x, quad[4].y, module));				}
 			}
 			//imshow("Parts", partImg);//for debug
 			//waitKey(1200);//for debug
@@ -92,73 +82,14 @@ vector<FP> QrDetectorMod::find() {
 		return fps;
 }
 
-Point QrDetectorMod::intersectionPoint(vector<FP> fps) {
 
-	vector<int> ab = cross(fps[0], fps[1]);
-	vector<int> bc = cross(fps[1], fps[2]);
-
-	vector<int> abParal = { ab[0], ab[1], -ab[0] * fps[2].x - ab[1] * fps[2].y };
-	vector<int> bcParal = { bc[0], bc[1], -bc[0] * fps[0].x - bc[1] * fps[0].y };
-	vector<int> inters = cross(abParal, bcParal);
-
-	return Point(inters[0] / inters[2], inters[1] / inters[2]);
-}
-
-// 0 and 2 elements of returned vec locate on hypotenuse, 0 - left FP, 2 - right FP 
-vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern) {
-	double distance01 = dist(pattern[0], pattern[1]);
-	double  distance12 = dist(pattern[1], pattern[2]);
-	double  distance02 = dist(pattern[0], pattern[2]);
-
-	vector<FP> returnPatterns(3);
-
-	if (distance12 >= distance01 && distance12 >= distance02) {
-		if (pattern[1].x < pattern[2].x){
-			returnPatterns[0] = pattern[1];
-			returnPatterns[1] = pattern[0];
-			returnPatterns[2] = pattern[2];
-		}
-		else{
-			returnPatterns[0] = pattern[2];
-			returnPatterns[1] = pattern[0];
-			returnPatterns[2] = pattern[1];
-		}
-	}
-	else if (distance02 >= distance01 && distance02 >= distance12) {
-		if (pattern[0].x < pattern[2].x){
-			returnPatterns[0] = pattern[0];
-			returnPatterns[1] = pattern[1];
-			returnPatterns[2] = pattern[2];
-		}
-		else{
-			returnPatterns[0] = pattern[2];
-			returnPatterns[1] = pattern[1];
-			returnPatterns[2] = pattern[0];
-		}
-	}
-	else {
-		if (pattern[0].x < pattern[1].x){
-			returnPatterns[0] = pattern[0];
-			returnPatterns[1] = pattern[2];
-			returnPatterns[2] = pattern[1];
-		}
-		else{
-			returnPatterns[0] = pattern[1];
-			returnPatterns[1] = pattern[2];
-			returnPatterns[2] = pattern[0];
-		}
-	}
-
-	return returnPatterns;
-}
-
+// Contour filtration --------------------------------------------------------------------------------------------------------
 Point QrDetectorMod::minCoord(vector<Point> v) {
 	int minY = v[0].y;
 	int minX = v[0].x;
 	for (int i = 1; i < 4; i++) {
 		if (v[i].y < minY) minY = v[i].y;
 		if (v[i].x < minX) minX = v[i].x;
-
 	}
 
 	return Point(minX, minY);
@@ -203,7 +134,7 @@ bool QrDetectorMod::inOtherContour(vector<Point>* test) {
 	}
 		for (int i = 0; i < quadList.size(); i++) {
 
-			if (dist(testCenter, quadList[i][4]) < 10) {
+			if (dist(testCenter, quadList[i][4]) < 5) {
 				if (area(*test) < area(quadList[i])) {
 					(*test).push_back(testCenter);
 					quadList[i] = *test;
@@ -275,6 +206,8 @@ bool QrDetectorMod::isQuad(vector<Point>* quad) {
 	return true;
 }
 
+
+// Binary image analysis---------------------------------------------------------------------------------------
 bool QrDetectorMod::checkRatio(int stateCount[]) {
 	int totalFinderSize = 0;
 	for (int i = 0; i < 5; i++) {
@@ -301,7 +234,7 @@ bool QrDetectorMod::checkRatio(int stateCount[]) {
 }
 
 float QrDetectorMod::centerFromEnd(int stateCount[], int end) {
-	return (float)(end - stateCount[4] - stateCount[3]) - stateCount[2] / 2.0f;
+	return (end - stateCount[4] - stateCount[3]) - stateCount[2] / 2.0;
 }
 
 bool QrDetectorMod::horizontalCheck(Mat img) {
@@ -388,13 +321,6 @@ bool QrDetectorMod::horizontalCheck(Mat img) {
 			}
 		}
 		// end looping current row
-		//if (checkRatio(stateCount)) {
-		//	bool confirmed = handlePossibleCenter(stateCount, row, img.cols);
-		//	if (confirmed) {
-		//		skipRows = stateCount[0];
-		//
-		//	}
-		//}
 	}
 
 	return false;
@@ -536,36 +462,99 @@ bool QrDetectorMod::firstHorizontalCheck(Mat img, int row) {
 	return false;
 }
 
+
+// Approximation--------------------------------------------------------------------------------------------------------
+int QrDetectorMod::removeExtraPoints(vector<Point>* dst, double eps){
+	int count = (*dst).size();
+	int new_count = count;
+	int pos = count - 1;
+	Point start_pt = (*dst)[pos];
+	if (++pos >= count) pos = 0;
+	int wpos = pos;
+	Point pt = (*dst)[pos];
+	if (++pos >= count) pos = 0;
+
+	for (int i = 0; i < count && new_count > 2; i++)
+	{
+		double dx, dy, dist, successive_inner_product;
+		Point end_pt = (*dst)[pos];
+		if (++pos >= count) pos = 0;
+
+		dx = end_pt.x - start_pt.x;
+		dy = end_pt.y - start_pt.y;
+		dist = fabs((pt.x - start_pt.x)*dy - (pt.y - start_pt.y)*dx);
+		successive_inner_product = (pt.x - start_pt.x) * (end_pt.x - pt.x) +
+			(pt.y - start_pt.y) * (end_pt.y - pt.y);
+
+		if (dist * dist <= 0.5*eps*(dx*dx + dy*dy) && dx != 0 && dy != 0 &&
+			successive_inner_product >= 0)
+		{
+			new_count--;
+			(*dst)[wpos] = start_pt = end_pt;
+			if (++wpos >= count) wpos = 0;
+			Point pt = (*dst)[pos];
+			if (++pos >= count) pos = 0;
+			i++;
+			continue;
+		}
+		(*dst)[wpos] = start_pt = pt;
+		if (++wpos >= count) wpos = 0;
+		pt = end_pt;
+	}
+
+	return new_count;
+}
+
+
+vector<Point> QrDetectorMod::approximate(vector<Point> contour){
+	if (contour.size() > 2){
+		pair<int, int> furthestPts = findFurthestPts(contour);
+		vector<Point> clockwise;
+		vector<Point> counterclockwise;
+		double eps = contourLength(contour)*0.04;
+
+		for (int i = furthestPts.first; i < furthestPts.second + 1; i++){
+			clockwise.push_back(contour[i]);
+		}
+		for (int i = furthestPts.second; i < contour.size(); i++){
+			counterclockwise.push_back(contour[i]);
+		}
+		for (int i = 0; i < furthestPts.first + 1; i++){
+			counterclockwise.push_back(contour[i]);
+		}
+
+		vector<Point> approx = simplifyWithRDP(clockwise, 0, clockwise.size() - 1, eps);
+		vector<Point> approx2 = simplifyWithRDP(counterclockwise, 0, counterclockwise.size() - 1, eps);
+		approx.insert(approx.end(), approx2.begin(), approx2.end());
+		int newc = 0;
+		vector<Point> approx3;
+		if (approx.size() > 2){
+			newc = removeExtraPoints(&approx, eps);
+			vector<Point> newap(approx.begin(), approx.begin() + newc - 1);
+			return newap;
+		}
+		else{
+
+			return approx;
+		}
+	}
+	else{
+
+		return contour;
+	}
+}
+
+
 double QrDetectorMod::contourLength(vector<Point> contour){
 	if (contour.size() <= 1)
 		return 0.0;
 	double perimeter = 0.0;
 
-	for (int i = 0; i < contour.size() - 1; i++)
-	{
-		
-		perimeter += dist(contour[i], contour[i+1]);
+	for (int i = 0; i < contour.size() - 1; i++) {
+		perimeter += dist(contour[i], contour[i + 1]);
 	}
 
 	return perimeter + dist(contour[0], contour[contour.size() - 1]);
-}
-
-vector<Point> QrDetectorMod::approximate(vector<Point> contour){
-	int lastPt = findLastPoint(contour);
-	vector<Point> clockwise;
-	double eps = contourLength(contour)*0.04;
-	vector<Point> counterclockwise;
-	for (int i = 0; i < lastPt + 1; i++){
-		clockwise.push_back(contour[i]);
-	}
-	for (int i = lastPt; i < contour.size(); i++){
-		counterclockwise.push_back(contour[i]);
-	}
-	vector<Point> approx = simplifyWithRDP(clockwise, 0, clockwise.size() - 1, eps);
-	approx.pop_back();
-	vector<Point> approx2 = simplifyWithRDP(counterclockwise, 0, counterclockwise.size() - 1, eps);
-	approx.insert(approx.end(), approx2.begin(), approx2.end());
-	return approx;
 }
 
 double QrDetectorMod::pointLineDistance(Point point, Point start, Point end) {
@@ -578,18 +567,21 @@ double QrDetectorMod::pointLineDistance(Point point, Point start, Point end) {
 	return n / d;
 }
 
-int QrDetectorMod::findLastPoint(vector<Point> pts) {
+pair<int, int> QrDetectorMod::findFurthestPts(vector<Point> pts) {
 	double mdist = -1.0;
-	int last;
-	for (int i = 0; i < pts.size(); i++){
-			double d = dist(pts[0], pts[i]);
+	int fst, lst;
+	for (int i = 0; i < pts.size() - 1; i++){
+		for (int j = i + 1; j < pts.size(); j++){
+			double d = dist(pts[i], pts[j]);
 			if (d > mdist){
 				mdist = d;
-				last = i;
+				fst = i;
+				lst = j;
 			}
+		}
 	}
-	return last;
 
+	return make_pair(fst, lst);
 }
 
 vector<Point> QrDetectorMod::simplifyWithRDP(vector<Point>& points, int startIndex, int lastIndex, double epsilon) {
@@ -626,6 +618,70 @@ vector<Point> QrDetectorMod::simplifyWithRDP(vector<Point>& points, int startInd
 		return r;
 	}
 }
+
+
+// Final work with FPs-----------------------------------------------------------------------------------------------------------
+Point QrDetectorMod::intersectionPoint(vector<FP> fps) {
+
+	vector<int> ab = cross(fps[0], fps[1]);
+	vector<int> bc = cross(fps[1], fps[2]);
+
+	vector<int> abParal = { ab[0], ab[1], -ab[0] * fps[2].x - ab[1] * fps[2].y };
+	vector<int> bcParal = { bc[0], bc[1], -bc[0] * fps[0].x - bc[1] * fps[0].y };
+	vector<int> inters = cross(abParal, bcParal);
+
+	return Point(inters[0] / inters[2], inters[1] / inters[2]);
+}
+
+// 0 and 2 elements of returned vec locate on hypotenuse, 0 - left FP, 2 - right FP 
+vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern) {
+	double distance01 = dist(pattern[0], pattern[1]);
+	double  distance12 = dist(pattern[1], pattern[2]);
+	double  distance02 = dist(pattern[0], pattern[2]);
+
+	vector<FP> returnPatterns(3);
+
+	if (distance12 >= distance01 && distance12 >= distance02) {
+		if (pattern[1].x < pattern[2].x){
+			returnPatterns[0] = pattern[1];
+			returnPatterns[1] = pattern[0];
+			returnPatterns[2] = pattern[2];
+		}
+		else{
+			returnPatterns[0] = pattern[2];
+			returnPatterns[1] = pattern[0];
+			returnPatterns[2] = pattern[1];
+		}
+	}
+	else if (distance02 >= distance01 && distance02 >= distance12) {
+		if (pattern[0].x < pattern[2].x){
+			returnPatterns[0] = pattern[0];
+			returnPatterns[1] = pattern[1];
+			returnPatterns[2] = pattern[2];
+		}
+		else{
+			returnPatterns[0] = pattern[2];
+			returnPatterns[1] = pattern[1];
+			returnPatterns[2] = pattern[0];
+		}
+	}
+	else {
+		if (pattern[0].x < pattern[1].x){
+			returnPatterns[0] = pattern[0];
+			returnPatterns[1] = pattern[2];
+			returnPatterns[2] = pattern[1];
+		}
+		else{
+			returnPatterns[0] = pattern[1];
+			returnPatterns[1] = pattern[2];
+			returnPatterns[2] = pattern[0];
+		}
+	}
+
+	return returnPatterns;
+}
+
+ 
 
 
 
