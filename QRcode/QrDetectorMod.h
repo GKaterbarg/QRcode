@@ -29,8 +29,8 @@ private:
 	bool isQuad(vector<Point>* pts);
 	bool inOtherContour(vector<Point>* test);
 	// Binary image analysys
-	bool firstHorizontalCheck(Mat img, int row);
-	bool horizontalCheck(Mat img);
+	bool fullHorizontalCheck(Mat img);
+	bool singleHorizontalCheck(Mat img, int row);
 	bool checkRatio(int stateCount[]);
 	float centerFromEnd(int stateCount[], int end);
 	bool crossCheckVertical(int startRow, int centerCol, int blackSqrCount, int originalStateCountTotal, Mat img);

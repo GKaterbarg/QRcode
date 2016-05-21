@@ -61,11 +61,11 @@ vector<FP> QrDetectorMod::find() {
 		threshold(partImg, partImg, 128, 255, THRESH_OTSU); // TODO: Has trik this func?
 		int dif = quad[4].y - y;
 		if (dif >= partImg.rows || dif <= 0) continue;
-		if (firstHorizontalCheck(partImg, dif)) {
+		if (singleHorizontalCheck(partImg, dif)) {
 			fps.push_back(FP(quad[4].x, quad[4].y, module));
 			}
 		else {
-			if (horizontalCheck(partImg)) {
+			if (fullHorizontalCheck(partImg)) {
 				fps.push_back(FP(quad[4].x, quad[4].y, module));				}
 			}
 			//imshow("Parts", partImg);//for debug
@@ -237,7 +237,7 @@ float QrDetectorMod::centerFromEnd(int stateCount[], int end) {
 	return (end - stateCount[4] - stateCount[3]) - stateCount[2] / 2.0;
 }
 
-bool QrDetectorMod::horizontalCheck(Mat img) {
+bool QrDetectorMod::fullHorizontalCheck(Mat img) {
 
 	int skipRows = 3;
 	int stateCount[5] = { 0 };
@@ -245,82 +245,11 @@ bool QrDetectorMod::horizontalCheck(Mat img) {
 
 	for (int row = skipRows - 1; row<img.rows; row += skipRows) {
 
-		stateCount[0] = 0;
-		stateCount[1] = 0;
-		stateCount[2] = 0;
-		stateCount[3] = 0;
-		stateCount[4] = 0;
-		currentState = 0;
 
-		uchar *ptr = img.ptr<uchar>(row);
-		for (int col = 0; col<img.cols; col++) {
-			// black pixel
-			if (ptr[col]<128) {
-				if ((currentState & 0x1) == 1) {
-					currentState++;
-				}
+		if (singleHorizontalCheck(img, row)){
 
-				stateCount[currentState]++;
-
-			}
-			else {
-				// white pixel
-				if ((currentState & 0x1) == 1) {
-					stateCount[currentState]++;
-				}
-				else {
-
-					if (currentState == 4) {
-
-						if (checkRatio(stateCount)) {
-							int stateCountTotal = stateCount[0] + stateCount[1] + stateCount[2] + stateCount[3] + stateCount[4];
-							float centerCol = centerFromEnd(stateCount, col);
-							bool confirmed = crossCheckVertical(row, (int)centerCol, stateCount[2], stateCountTotal, img);
-							if (confirmed) {
-								module = stateCountTotal / 7.0;
-								return true;
-							}
-							else {
-								stateCount[0] = stateCount[2];
-								stateCount[1] = stateCount[3];
-								stateCount[2] = stateCount[4];
-								stateCount[3] = 1;
-								stateCount[4] = 0;
-								currentState = 3;
-								continue;
-							}
-
-							currentState = 0;
-							stateCount[0] = 0;
-							stateCount[1] = 0;
-							stateCount[2] = 0;
-							stateCount[3] = 0;
-							stateCount[4] = 0;
-
-						}
-
-						else {
-
-							currentState = 3;
-							stateCount[0] = stateCount[2];
-							stateCount[1] = stateCount[3];
-							stateCount[2] = stateCount[4];
-							stateCount[3] = 1;
-							stateCount[4] = 0;
-
-						}
-
-					}
-
-					else {
-
-						stateCount[++currentState]++;
-
-					}
-				}
-			}
+			return true;
 		}
-		// end looping current row
 	}
 
 	return false;
@@ -384,7 +313,7 @@ bool QrDetectorMod::crossCheckVertical(int startRow, int centerCol, int blackSqr
 	return checkRatio(stateCount);
 }
 
-bool QrDetectorMod::firstHorizontalCheck(Mat img, int row) {
+bool QrDetectorMod::singleHorizontalCheck(Mat img, int row) {
 
 	int stateCount[5] = { 0 };
 	int currentState = 0;
