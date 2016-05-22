@@ -14,9 +14,9 @@ int main()
 {
 	//if (videoInput()) return 1; // Video or stream input
 
-	TestModule test = TestModule(20); test.startTest(); // Test some number images
+	//TestModule test = TestModule(20); test.startTest(); // Test some number images
 
-	//singleInput(); // Single image input
+	singleInput(); // Single image input
 	
 	waitKey(0);
 	return 0;

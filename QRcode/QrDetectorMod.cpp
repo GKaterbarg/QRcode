@@ -11,7 +11,6 @@ void QrDetectorMod::setImage(Mat image) {
 	module = 0.0;
 }
 
-
 // Main execute funcion---------------------------------------------------------------------------------
 vector<FP> QrDetectorMod::find() {
 	Mat gray = Mat(image.rows, image.cols, CV_8UC1);
@@ -21,13 +20,17 @@ vector<FP> QrDetectorMod::find() {
 
 	vector<vector<Point>> contours;
 	vector<Point> approx;
-	findContours(edges, contours, RETR_LIST, CHAIN_APPROX_NONE); //TODO: Has trik this func ?
+	//findContours(edges, contours, RETR_LIST, CHAIN_APPROX_NONE); //TODO: Has trik this func ?
+	uchar** arr = matToArr(edges);
+	myFindContours(arr, &contours);
+	//for each (vector<Point> c in contours){
+	//	for each(Point p in c) circle(image, p, 1, Scalar(0, 128, 128), -1);
+	//}
 
 	for (int i = 0; i < contours.size(); i++)
 	{
-
 		approx = approximate(contours[i]);
-		//for each (Point p in approx) circle(image, Point(p.x, p.y), 1, Scalar(0, 0, 255), -1); // for degug
+		for each (Point p in approx) circle(image, Point(p.x, p.y), 1, Scalar(0, 0, 255), -1); // for degug
 		if (approx.size() == 4){
 			//drawContours(image, contours, i, Scalar(255, 0, 0), CV_FILLED); //for debug
 			if (isQuad(&approx) && abs(area(approx)) > 10){
@@ -41,7 +44,6 @@ vector<FP> QrDetectorMod::find() {
 	if (quadList.size() < 2){
 		return vector<FP>();
 	}
-
 	vector<FP> fps;
 	for each(vector<Point> quad in quadList){
 
@@ -78,12 +80,92 @@ vector<FP> QrDetectorMod::find() {
 			intersPt = intersectionPoint(fps);
 			fps.push_back(FP(intersPt.x, intersPt.y, -1));
 		}
-
 		return fps;
 }
 
 
-// Contour filtration --------------------------------------------------------------------------------------------------------
+// Contour analysys --------------------------------------------------------------------------------------------------------
+
+void QrDetectorMod::myFindContours(unsigned char** img, vector<vector<Point>>* contours)
+{
+	for (int i = 1; i < IMAGE_HEIGTH - 1; i++)
+	{
+		for (int j = 1; j < IMAGE_WIDTH - 1; j++)
+		{
+			vector<Point> contour;
+			if (img[i][j] > 128)
+			{
+				findContour(img, &contour, i, j);
+				if (contour.size() > 3){
+					(*contours).push_back(contour);
+				}
+			}
+		}
+	}
+}
+
+void QrDetectorMod::findContour(unsigned char** img, vector<Point>* contour, int y, int x)
+{
+	int i = y, j = x;
+
+	do
+	{
+		img[i][j] = 128;
+
+		if (img[i + 1][j] > 128){
+			i += 1;
+			(*contour).push_back(Point(j, i));
+		}
+		else
+
+			if (img[i + 1][j + 1] > 128){
+				i += 1; j += 1;
+				(*contour).push_back(Point(j, i));
+			}
+			else
+
+				if (img[i][j + 1] > 128){
+					j += 1;
+					(*contour).push_back(Point(j, i));
+				}
+				else
+
+					if (img[i - 1][j - 1] > 128){
+						i -= 1; j -= 1;
+						(*contour).push_back(Point(j, i));
+					}
+					else
+
+						if (img[i][j - 1] > 128){
+							j -= 1;
+							(*contour).push_back(Point(j, i));
+						}
+						else
+
+							if (img[i + 1][j - 1] > 128)
+							{
+								i += 1; j -= 1;
+								(*contour).push_back(Point(j, i));
+							}
+							else
+							{
+								break;
+							}
+
+	} while (!(i == x && j == y) && i != IMAGE_HEIGTH - 1 && j != IMAGE_WIDTH - 1 && i != 0 && j != 0);
+
+}
+
+uchar** QrDetectorMod::matToArr(Mat img){
+	uchar** arr = new uchar*[img.rows];
+	for (int i = 0; i<img.rows; ++i)
+		arr[i] = new uchar[img.cols];
+
+	for (int i = 0; i<img.rows; ++i)
+		arr[i] = img.ptr<uchar>(i);
+	return arr;
+}
+
 Point QrDetectorMod::minCoord(vector<Point> v) {
 	int minY = v[0].y;
 	int minX = v[0].x;
@@ -609,10 +691,3 @@ vector<FP> QrDetectorMod::orderBestPatterns(vector<FP> pattern) {
 
 	return returnPatterns;
 }
-
- 
-
-
-
-
-
