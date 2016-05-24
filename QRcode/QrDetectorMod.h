@@ -17,8 +17,8 @@ public:
 private:
 	uchar** QrDetectorMod::matToArr(Mat img);
 	// Contour analysys
-	void myFindContours(unsigned char** img, vector<vector<Point>>* contours);
-	void findContour(unsigned char** img, vector<Point>* contour, int y, int x);
+	void findContours_(uchar** img, vector<vector<Point>>* contours);
+	void findContour(unsigned char** img, vector<Point>* contour, int y, int x, int k);
 	vector<int> cross(Point a, Point b);
 	vector<int> cross(FP a, FP b);
 	vector<int> cross(vector<int> a, vector<int> b);
@@ -52,7 +52,7 @@ private:
 	vector<vector<Point>> quadList;
 	double module;
 	Mat image;
-	int IMAGE_HEIGTH = 240;
-	int IMAGE_WIDTH = 320;
+	int IMAGE_HEIGTH;
+	int IMAGE_WIDTH;
 };
 #endif
